@@ -1,6 +1,7 @@
 package org.example;
 
 import javax.crypto.*;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -8,14 +9,9 @@ import java.awt.event.ActionListener;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.util.Arrays;
-import javax.crypto.spec.PBEKeySpec;
-import java.util.Base64;
 
 public class RSAgenerator implements ActionListener {
 
@@ -34,6 +30,10 @@ public class RSAgenerator implements ActionListener {
         try {
             KeyPair pair = createRSA();
             SealedObject privateKey = keyAESEncryption(pair.getPrivate());
+
+            System.out.println(pair.getPrivate());
+            System.out.println(pair.getPublic());
+
             saveKey( rootPath + "/private.key", privateKey);
             saveKey(rootPath + "/public.key", pair.getPublic());
         } catch (RuntimeException exception) {
@@ -67,13 +67,16 @@ public class RSAgenerator implements ActionListener {
     }
 
     private void saveKey(String savePath, Object key){
+        Boolean exception = Boolean.FALSE;
         try (FileOutputStream fos = new FileOutputStream(savePath)) {
             ObjectOutputStream o = new ObjectOutputStream(fos);
             o.writeObject(key);
         } catch(Exception e){
+            exception = Boolean.TRUE;
             throw new RuntimeException("Key didn't save");
         } finally {
-            System.out.println("Key saved");
+            if (!exception)
+                System.out.println("Key saved");
             // System.out.println(Base64.getEncoder().encodeToString(publicKey.getEncoded()));
         }
     }
