@@ -4,8 +4,6 @@ import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -13,14 +11,13 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
-public class RSAgenerator implements ActionListener {
+public class RSAgenerator {
 
-    String password = "password";
+    private final String password;
 
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        FolderChooser fc = new FolderChooser();
+    public RSAgenerator(String password) {
+        this.password = password;
+        FolderChooser fc = new FolderChooser("Wybierz miejsce zapisu");
         if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION){
             createRSAFile(fc.getSelectedFile().getAbsolutePath());
         }
@@ -30,9 +27,6 @@ public class RSAgenerator implements ActionListener {
         try {
             KeyPair pair = createRSA();
             SealedObject privateKey = keyAESEncryption(pair.getPrivate());
-
-            System.out.println(pair.getPrivate());
-            System.out.println(pair.getPublic());
 
             saveKey( rootPath + "/private.key", privateKey);
             saveKey(rootPath + "/public.key", pair.getPublic());
@@ -47,7 +41,7 @@ public class RSAgenerator implements ActionListener {
             generator.initialize(4096);
             return generator.generateKeyPair();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 

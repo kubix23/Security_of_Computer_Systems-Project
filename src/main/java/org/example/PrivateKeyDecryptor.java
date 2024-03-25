@@ -4,6 +4,7 @@ import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -15,28 +16,37 @@ import java.security.spec.KeySpec;
 
 public class PrivateKeyDecryptor {
 
-    String password = "password";
+    private final String password;
+    private PrivateKey pr;
 
-    public PrivateKeyDecryptor() {
+    public PrivateKeyDecryptor(String password) {
+        this.password = password;
+        JFileChooser fc = new JFileChooser();
+        fc.setDialogTitle("Wybierz klucz prywatny");
+        fc.setFileFilter(new FileNameExtensionFilter(".key", "key"));
+        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            pr = keyAESDecryption(fc.getSelectedFile().getAbsolutePath());
+        }
+    }
+
+    public PrivateKey getPr() {
+        return pr;
+    }
+
+    private PrivateKey keyAESDecryption(String savePath) {
         try {
-            FolderChooser fc = new FolderChooser();
-            String savePath = "";
-            if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-                savePath = fc.getSelectedFile().getAbsolutePath() + "/private.key";
-            }
-
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             KeySpec spec = new PBEKeySpec(password.toCharArray(), password.toUpperCase().getBytes(), 65536, 256);
             SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
 
             Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.DECRYPT_MODE, secret);
-            PrivateKey pr = (PrivateKey) loadObject(savePath).getObject(cipher);
-            System.out.println(pr);
-        } catch (NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException |
-                 InvalidKeySpecException | IOException | InvalidKeyException | ClassNotFoundException |
-                 BadPaddingException e) {
+            return (PrivateKey) loadObject(savePath).getObject(cipher);
+        } catch (ClassNotFoundException | NoSuchAlgorithmException | IllegalBlockSizeException | IOException |
+                 NoSuchPaddingException | InvalidKeyException | InvalidKeySpecException e) {
             throw new RuntimeException(e.getMessage());
+        } catch (BadPaddingException e) {
+            throw new RuntimeException("Invalid password");
         }
     }
 

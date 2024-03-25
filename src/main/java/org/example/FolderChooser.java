@@ -3,9 +3,9 @@ package org.example;
 import javax.swing.*;
 
 public class FolderChooser extends JFileChooser {
-    public FolderChooser() {
+    public FolderChooser(String name) {
         super();
-        this.setDialogTitle("Wybierz miejsce zapisu");
+        this.setDialogTitle(name);
         this.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         this.setAcceptAllFileFilterUsed(false);
     }
