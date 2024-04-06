@@ -12,8 +12,6 @@ import javax.xml.crypto.dsig.keyinfo.KeyInfoFactory;
 import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -33,6 +31,7 @@ public class XAdESsign {
     File fileToSign;
     Element signedPropertiesElement;
     String signatureId;
+    PublicKey publicKey;
     ArrayList<String> ObjectReference = new ArrayList<>();
 
     String signedPropertiesId;
@@ -44,6 +43,7 @@ public class XAdESsign {
             fc.setDialogTitle("Wybierz plik do podpisania");
             if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                 DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+                docFactory.setNamespaceAware(true);
                 DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
                 Document doc = docBuilder.newDocument();
                 fileToSign = fc.getSelectedFile();
@@ -60,11 +60,9 @@ public class XAdESsign {
 
                     TransformerFactory transformerFactory = TransformerFactory.newInstance();
                     Transformer transformer = transformerFactory.newTransformer();
-                    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
                     DOMSource source = new DOMSource(signDoc);
 
                     StreamResult result = new StreamResult(output);
-
                     transformer.transform(source, result);
                 }
             }
@@ -83,17 +81,15 @@ public class XAdESsign {
         List<XMLObject> objects = getObjectsFromData(xmlSignatureFactory, document);
         SignedInfo signedInfo = createSignedInfo(
                 xmlSignatureFactory,
-                URLEncoder.encode(fileToSign.getName(), StandardCharsets.UTF_8).replace("+", "%20"),
-                "#" + signedPropertiesId
+                URLEncoder.encode(fileToSign.getName(), StandardCharsets.UTF_8).replace("+", "%20")
+                , "#" + signedPropertiesId
         );
         KeyInfo ki = createKeyInfo(xmlSignatureFactory);
         XMLSignature xmlSignature = xmlSignatureFactory.newXMLSignature(signedInfo, ki, objects, signatureId, null);
 
         DOMSignContext domSignContext = new DOMSignContext(privateKey, document);
-
         domSignContext.setDefaultNamespacePrefix("ds");
         domSignContext.setBaseURI(fileToSign.toPath().getParent().toUri().toString());
-        domSignContext.setIdAttributeNS(signedPropertiesElement, null, "Id");
 
         xmlSignature.sign(domSignContext);
 
@@ -102,12 +98,13 @@ public class XAdESsign {
 
     private KeyInfo createKeyInfo(XMLSignatureFactory xmlSignatureFactory) throws Exception {
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Wybierz klucz publiny");
+        fc.setDialogTitle("Wybierz klucz publiczny");
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            PublicKey key = null;
+            PublicKey key;
             try (FileInputStream fos = new FileInputStream(fc.getSelectedFile())) {
                 ObjectInputStream o = new ObjectInputStream(fos);
                 key = (PublicKey) o.readObject();
+                publicKey = key;
             }
 
             KeyInfoFactory keyInfoFactory = xmlSignatureFactory.getKeyInfoFactory();
@@ -140,25 +137,22 @@ public class XAdESsign {
         return xmlSignatureFactory.newSignedInfo(c14nMethod, signMethod, references);
     }
 
-    private List<XMLObject> getObjectsFromData(XMLSignatureFactory xmlSignatureFactory, Document document) throws ParserConfigurationException {
+    private List<XMLObject> getObjectsFromData(XMLSignatureFactory xmlSignatureFactory, Document document) {
         List<XMLObject> objects = new ArrayList<>();
-        XMLObject xadesXmlObject = prepareXadesXmlObject(xmlSignatureFactory);
+        XMLObject xadesXmlObject = prepareXadesXmlObject(xmlSignatureFactory, document);
         objects.add(xadesXmlObject);
         return objects;
     }
 
-    private XMLObject prepareXadesXmlObject(XMLSignatureFactory xmlSignFactory) throws ParserConfigurationException {
-        Element qualifyingPropertiesElement = createXadesObject();
+    private XMLObject prepareXadesXmlObject(XMLSignatureFactory xmlSignFactory, Document document) {
+        Element qualifyingPropertiesElement = createXadesObject(document);
+
         return xmlSignFactory.newXMLObject(Collections.singletonList(new DOMStructure(qualifyingPropertiesElement)), null, null, null);
     }
 
-    private Element createXadesObject() throws ParserConfigurationException {
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-        Document doc = docBuilder.newDocument();
-
-        Element qualifyingProperties = createQualifyingPropertiesObject(doc);
-        Element signedProperties = prepareSignedPropertiesElement(doc);
+    private Element createXadesObject(Document document) {
+        Element qualifyingProperties = createQualifyingPropertiesObject(document);
+        Element signedProperties = prepareSignedPropertiesElement(document);
         qualifyingProperties.appendChild(signedProperties);
 
         return qualifyingProperties;
@@ -174,6 +168,7 @@ public class XAdESsign {
     private Element prepareSignedPropertiesElement(Document doc) {
         Element signedProperties = doc.createElement("xades:SignedProperties");
         signedProperties.setAttribute("Id", signedPropertiesId);
+        signedProperties.setIdAttribute("Id", true);
 
         Element signedSignatureProperties = prepareSignedSignatureProperties(doc);
         Element signedDataObjectProperties = prepareSignedDataObjectProperties(doc);
@@ -216,11 +211,7 @@ public class XAdESsign {
         dataObjectFormat.appendChild(mimeType);
 
         Element description = doc.createElement("xades:Description");
-        description.appendChild(doc.createTextNode("""
-                Size:%d
-                Filename:%s
-                Date_of_modification:%s
-                """
+        description.appendChild(doc.createTextNode("Size:%d; Filename:%s; Date_of_modification:%s "
                 .formatted(
                         fileToSign.length(),
                         fileToSign.getName(),
