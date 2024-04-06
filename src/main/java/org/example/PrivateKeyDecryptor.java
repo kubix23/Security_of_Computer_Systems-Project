@@ -19,7 +19,7 @@ public class PrivateKeyDecryptor {
     private final String password;
     private PrivateKey pr;
 
-    public PrivateKeyDecryptor(String password) {
+    public PrivateKeyDecryptor(String password) throws Exception {
         this.password = password;
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle("Wybierz klucz prywatny");
@@ -33,7 +33,7 @@ public class PrivateKeyDecryptor {
         return pr;
     }
 
-    private PrivateKey keyAESDecryption(String savePath) {
+    private PrivateKey keyAESDecryption(String savePath) throws Exception {
         try {
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             KeySpec spec = new PBEKeySpec(password.toCharArray(), password.toUpperCase().getBytes(), 65536, 256);
@@ -44,26 +44,26 @@ public class PrivateKeyDecryptor {
             return (PrivateKey) loadObject(savePath).getObject(cipher);
         } catch (ClassNotFoundException | NoSuchAlgorithmException | IllegalBlockSizeException | IOException |
                  NoSuchPaddingException | InvalidKeyException | InvalidKeySpecException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new Exception(e.getMessage());
         } catch (BadPaddingException e) {
-            throw new RuntimeException("Invalid password");
+            throw new Exception("Invalid password");
         }
     }
 
-    private SealedObject loadObject(String savePath) {
+    private SealedObject loadObject(String savePath) throws Exception {
         Boolean exception = Boolean.FALSE;
         try (FileInputStream fos = new FileInputStream(savePath)) {
             ObjectInputStream o = new ObjectInputStream(fos);
             return (SealedObject) o.readObject();
         } catch (ClassCastException e) {
             exception = Boolean.TRUE;
-            throw new RuntimeException("Key didn't save");
+            throw new Exception("Key didn't save");
         } catch (IOException e) {
             exception = Boolean.TRUE;
-            throw new RuntimeException(e.getMessage());
+            throw new Exception(e.getMessage());
         } catch (ClassNotFoundException e) {
             exception = Boolean.TRUE;
-            throw new RuntimeException("Object read error");
+            throw new Exception("Object read error");
         } finally {
             if (!exception)
                 System.out.println("Key loaded");

@@ -36,6 +36,10 @@ public class XAdESsign {
 
     String signedPropertiesId;
 
+    public String getFilePath() {
+        return fileToSign.getPath();
+    }
+
     public XAdESsign(String password) throws Exception {
         PrivateKeyDecryptor key = new PrivateKeyDecryptor(password);
         if (key.getPr() != null) {

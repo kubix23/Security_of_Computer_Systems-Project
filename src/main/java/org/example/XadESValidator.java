@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 public class XadESValidator {
     File fileSigned;
 
+    Boolean isValidate;
+
     public XadESValidator() throws IOException, SAXException, MarshalException, XMLSignatureException, ParserConfigurationException, NoSuchProviderException {
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle("Wybierz plik podpisu");
@@ -43,8 +45,12 @@ public class XadESValidator {
             markSignerPropertiesId(signDoc);
             fileSigned = fc.getSelectedFile();
 
-            System.out.println(validate(signDoc));
+            isValidate = validate(signDoc);
         }
+    }
+
+    public Boolean getValidate() {
+        return isValidate;
     }
 
     private void markSignerPropertiesId(Document document) {
@@ -83,7 +89,7 @@ public class XadESValidator {
     }
 
 
-    public boolean validate(Document document) throws MarshalException, XMLSignatureException, NoSuchProviderException {
+    private boolean validate(Document document) throws MarshalException, XMLSignatureException, NoSuchProviderException {
         DOMValidateContext validateContext = new DOMValidateContext(new KeyValueSelector(), document);
         validateContext.setProperty("org.jcp.xml.dsig.secureValidation", false);
         validateContext.setDefaultNamespacePrefix("ds");

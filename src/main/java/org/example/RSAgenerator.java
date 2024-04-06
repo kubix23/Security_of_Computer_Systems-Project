@@ -14,13 +14,19 @@ import java.security.spec.KeySpec;
 public class RSAgenerator {
 
     private final String password;
+    private String path;
 
     public RSAgenerator(String password) {
         this.password = password;
         FolderChooser fc = new FolderChooser("Wybierz miejsce zapisu");
         if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION){
+            path = fc.getSelectedFile().getAbsolutePath();
             createRSAFile(fc.getSelectedFile().getAbsolutePath());
         }
+    }
+
+    public String getPath() {
+        return path;
     }
 
     private void createRSAFile(String rootPath){
