@@ -18,7 +18,7 @@ public class Panel extends JFrame implements MainPanel {
      * Konstruktor głównej aplikacji
      */
     public Panel() throws HeadlessException {
-        super("Hello World");
+        super("File signer");
         config();
         addComponents();
         setVisible(true);

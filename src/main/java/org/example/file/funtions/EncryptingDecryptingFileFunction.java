@@ -22,7 +22,7 @@ public class EncryptingDecryptingFileFunction {
      */
     public byte[] EncryptingFile(PrivateKey privateKey, byte[] fileIn)
             throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        Cipher cipher = Cipher.getInstance("RSA");
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, privateKey);
         return cipher.doFinal(fileIn);
     }
@@ -35,7 +35,7 @@ public class EncryptingDecryptingFileFunction {
      * @return Odszyfrowana zawartość.
      */
     public byte[] DencryptingFile(PublicKey publicKey, byte[] fileIn) throws Exception {
-        Cipher cipher = Cipher.getInstance("RSA");
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.DECRYPT_MODE, publicKey);
         return cipher.doFinal(fileIn);
     }

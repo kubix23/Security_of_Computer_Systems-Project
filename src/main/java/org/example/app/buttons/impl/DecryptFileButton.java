@@ -40,9 +40,9 @@ public class DecryptFileButton extends JButton implements DecryptFile, Logger, A
     @Override
     public String selectFilePath() {
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Wybierz plik do zaszyfrowania");
+        fc.setDialogTitle("Wybierz plik do odszyfrowania");
         if (fc.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-            printLog("Wybrano plik do zaszyfrowania");
+            printLog("Wybrano plik do odszyfrowania");
             return fc.getSelectedFile().getAbsolutePath();
         } else {
             printLog("Nie wybrano pliku");

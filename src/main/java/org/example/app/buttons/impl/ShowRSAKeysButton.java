@@ -49,7 +49,7 @@ public class ShowRSAKeysButton extends JButton implements ShowRSAKeys, Logger, A
         String publicKeyPath = selectPublicKeyPath();
         String password = collectPassword();
         KeyPair keyPair = getKeyPair(privateKeyPath, publicKeyPath, password);
-        printLog(keyPair.getPrivate().toString() + '\n' + keyPair.getPublic().toString());
+        printLog(keyPair.getPrivate() + "\n" + keyPair.getPublic());
     }
 
     @Override
@@ -71,7 +71,7 @@ public class ShowRSAKeysButton extends JButton implements ShowRSAKeys, Logger, A
         fc.setDialogTitle("Wybierz klucz publiczny");
         String path = fileChooserConfig(fc);
         if (path == null) {
-            printLog("Nie znaleziono klucza publicznego");
+            printLog("Nie wybrano klucza prywatnego");
         } else {
             printLog("Wybrano klucz publiczny");
         }
@@ -89,8 +89,10 @@ public class ShowRSAKeysButton extends JButton implements ShowRSAKeys, Logger, A
 
     @Override
     public KeyPair getKeyPair(String privateKeyPath, String publicKeyPath, String password) {
-        PrivateKey privK = AppController.getPrivateKey(privateKeyPath, password);
-        PublicKey pubK = AppController.getPublicKey(publicKeyPath);
+        PrivateKey privK = null;
+        PublicKey pubK = null;
+        if (privateKeyPath != null) privK = AppController.getPrivateKey(privateKeyPath, password);
+        if (publicKeyPath != null) pubK = AppController.getPublicKey(publicKeyPath);
         return new KeyPair(pubK, privK);
     }
 

@@ -61,7 +61,7 @@ public class RSAgeneratorFunction {
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             KeySpec spec = new PBEKeySpec(password.toCharArray(), password.toUpperCase().getBytes(), 65536, 256);
             SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
-            Cipher cipher = Cipher.getInstance("AES");
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
             cipher.init(Cipher.ENCRYPT_MODE, secret);
             return cipher.doFinal(privateKey.getEncoded());
         } catch (NoSuchPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException |
